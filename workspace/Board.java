@@ -58,11 +58,21 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
 
+        
         //TO BE IMPLEMENTED FIRST
-     
-      //for (.....)  
-//        	populate the board with squares here. Note that the board is composed of 64 squares alternating from 
-//        	white to black.
+        //populate the board with squares here. Note that the board is composed of 64 squares alternating from white to black.
+// PRE CONDITION: rows must be inbetween 0-7
+//POST CONDITION: will retruen an array list of squares
+      for (int row = 0; row < 8; row++ ) {
+        for(int col = 0; col < 8; col++) {
+            boolean isWhite = (row + col) % 2 == 0;
+            
+            board[row][col] = new Square(this, isWhite, row, col);
+            this.add(board[row][col]); 
+        }
+        
+      } 
+//        	
 
         initializePieces();
 
@@ -79,9 +89,48 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
 	//set up the board such that the black pieces are on one side and the white pieces are on the other.
 	//since we only have one kind of piece for now you need only set the same number of pieces on either side.
 	//it's up to you how you wish to arrange your pieces.
+
+    //pre-condition: must be placed somewhere on board
+    //post-condition: will print out an image + location
     private void initializePieces() {
-    	
-    	board[0][0].put(new Piece(true, RESOURCES_WKING_PNG));
+    	//white pieces
+    	board[0][0].put(new Rook(true, RESOURCES_WROOK_PNG));
+        board[0][1].put(new Knight(true, RESOURCES_WKNIGHT_PNG));
+        board[0][2].put(new Bishop(true, RESOURCES_WBISHOP_PNG));
+        board[0][3].put(new King(true, RESOURCES_WKING_PNG));
+        board[0][4].put(new Queen(true, RESOURCES_WQUEEN_PNG));
+        board[0][5].put(new Bishop(true, RESOURCES_WBISHOP_PNG));
+        board[0][6].put(new Knight(true, RESOURCES_WKNIGHT_PNG));
+        board[0][7].put(new Rook(true, RESOURCES_WROOK_PNG));
+
+        board[1][0].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][1].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][2].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][3].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][4].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][5].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][6].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        board[1][7].put(new Pawn(true, RESOURCES_WPAWN_PNG));
+        
+        //black pieces
+        board[6][0].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][1].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][2].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][3].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][4].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][5].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][6].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+        board[6][7].put(new Pawn(false, RESOURCES_BPAWN_PNG));
+
+        board[7][0].put(new Rook(false, RESOURCES_BROOK_PNG));
+        board[7][1].put(new Knight(false, RESOURCES_BKNIGHT_PNG));
+        board[7][2].put(new Bishop(false, RESOURCES_BBISHOP_PNG));
+        board[7][3].put(new King(false, RESOURCES_BKING_PNG));
+        board[7][4].put(new Queen(false, RESOURCES_BQUEEN_PNG));
+        board[7][5].put(new Bishop(false, RESOURCES_BBISHOP_PNG));
+        board[7][6].put(new Knight(false, RESOURCES_BKNIGHT_PNG));
+        board[7][7].put(new Rook(false, RESOURCES_BROOK_PNG));
+
 
     }
 
@@ -122,6 +171,7 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
         }
         
     }
+    
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -145,26 +195,106 @@ public class Board extends JPanel implements MouseListener, MouseMotionListener 
     //TO BE IMPLEMENTED!
     //should move the piece to the desired location only if this is a legal move.
     //use the pieces "legal move" function to determine if this move is legal, then complete it by
-    //moving the new piece to it's new board location. 
+    //moving the new piece to it's new board location.
+    
+    //pre-condition: an x and y coordinate\
+    //post-condition: array list of squares mouse can be released at
     @Override
     public void mouseReleased(MouseEvent e) {
         Square endSquare = (Square) this.getComponentAt(new Point(e.getX(), e.getY()));
         
         //using currPiece
-        
-       
+        for(Square [] row: board) {
+        	for(Square s: row) {
+        		s.setBorder(null);
+     
+        	}
+        }
+
+        if(fromMoveSquare != null && currPiece != null) {
+            boolean wasInCheck = isInCheck(currPiece.getColor());
+            ArrayList<Square> legalMoves = currPiece.getLegalMoves(this, fromMoveSquare);
+
+            if(legalMoves.contains(endSquare)) {
+                Piece capturedPiece = endSquare.getOccupyingPiece();
+                endSquare.put(currPiece);
+                fromMoveSquare.removePiece();
+
+                boolean stillInCheck = isInCheck(currPiece.getColor());
+
+                if(stillInCheck){
+                    fromMoveSquare.put(currPiece);
+                    endSquare.put(capturedPiece);
+                } else {
+                    currPiece = null; 
+                } 
+            } else {
+                    fromMoveSquare.put(currPiece);
+                }
+        }
         fromMoveSquare.setDisplay(true);
-        currPiece = null;
         repaint();
     }
+       
+        
+
 
     @Override
     public void mouseDragged(MouseEvent e) {
         currX = e.getX() - 24;
         currY = e.getY() - 24;
 
+        if(currPiece!= null) {
+        	for(Square s: currPiece.getLegalMoves(this, fromMoveSquare)) {
+        		s.setBorder(BorderFactory.createLineBorder(Color.MAGENTA));
+        	}
+        	
+        }
+
         repaint();
     }
+
+    //precondition - the board is initialized and contains a king of either color. The boolean kingColor corresponds to the color of the king we wish to know the status of.
+          //postcondition - returns true of the king is in check and false otherwise.
+	public boolean isInCheck(boolean kingColor) {
+		Square kingSquare = null;
+
+        for(int row = 0; row < 8; row++) {
+            for(int col = 0; col < 8; col++) {
+                Square square = board[row][col];
+                Piece piece = square.getOccupyingPiece();
+
+                if(piece != null && piece instanceof King && piece.getColor() == kingColor){
+                    kingSquare = square;
+                    break;
+                }
+            }
+            if(kingSquare != null) {
+                break;
+            }
+            
+        }
+        if(kingSquare == null){
+            return false;
+        }
+
+        for(int row = 0; row < 8; row++){
+            for(int col = 0; col < 8; col++){
+                Square square = board[row][col];
+                Piece piece = square.getOccupyingPiece();
+
+                if(piece != null && piece.getColor() != kingColor){
+                    ArrayList<Square> controlledSquares = piece.getControlledSquares(board, square);
+
+                    if(controlledSquares.contains(kingSquare)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
 
     @Override
     public void mouseMoved(MouseEvent e) {
